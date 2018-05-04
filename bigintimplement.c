@@ -1,21 +1,26 @@
 #include "bigint.h"
 
-
 /*********************************************************************
  * The following functions must be implemented to solve the          *
  * problems in the laboration.                                       *
  *********************************************************************/
 
+#include <random.h> //@LAB3 för bi_rand
+#define MAXSTORLEK 4 //@LAB3 4 * 4bytes * 8bits/byte = 128 bits
+
+
 /**
  * Initializes this input.
  */
 void bi_init(bi_t bi) {
+	bi.value = malloc (MAXSTORLEK * LIMBBYTES); //@LAB3
 }
 
 /**
  * Deallocates the memory allocated in the initialized input.
  */
 void bi_clear(bi_t bi) {
+	free (bi.value); //@LAB3
 }
 
 /**
@@ -71,6 +76,16 @@ void bi_setui(bi_t res, unsigned int u) {
  * keep in mind that it outputs a number in a small interval.
  */
 void bi_rand(bi_t res, int bits) {
+// 1 Word = 3bytes = 24 bit
+// ... ... ... ...
+//räkna ut hur många bytes vi behöver
+	int antal_bitar = bits;
+	int antal_bytes = bits;//
+//räkna ut hur många words vi behöver
+//Fyll varje Limb med ett word tills vi använt upp alla bits
+//Sista, och mest signifikanta värdet kan vara tvunget att ha specialfall
+
+
 }
 
 /**
