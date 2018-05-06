@@ -30,6 +30,9 @@
 #include "bigint.h"
 #include "correct.h"
 
+
+void eget_test(void); //LAB3 I TESTSYFTE
+
 int verbose = 0;
 
 /**
@@ -482,7 +485,29 @@ void runtests() {
   free(test_name);
 }
 
+
+
+void eget_test() {
+  //EGEN KOD I TESTSYFTE
+    printf("%d", WORDSIZE);
+    int x = 10;
+
+    bi_t a ;
+    int bitar = 123;
+    bi_init(a);
+    bi_rand (a, bitar);
+    int limbs = bitar / WORDSIZE;
+
+    for (int i = 0; i < limbs; i++) {
+      printf("Word nr: %d, = %d \n ", i, a->value[i]);
+     }
+
+}
+
 void main(int argc, char **argv) {
+
+  eget_test();
+
   time_t t;
 
   srand((unsigned) time(&t));

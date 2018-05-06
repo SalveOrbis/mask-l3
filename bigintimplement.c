@@ -5,22 +5,25 @@
  * problems in the laboration.                                       *
  *********************************************************************/
 
-#include <random.h> //@LAB3 för bi_rand
-#define MAXSTORLEK 4 //@LAB3 4 * 4bytes * 8bits/byte = 128 bits
-
 
 /**
  * Initializes this input.
  */
 void bi_init(bi_t bi) {
-	bi.value = malloc (MAXSTORLEK * LIMBBYTES); //@LAB3
+	bi->sign = 0;
+	bi->value = malloc (sizeof(*(bi->value) * DEFAULT_LIMBS)); //@LAB3
+	bi->limbs = DEFAULT_LIMBS;
+	for (int i = 0;  i < DEFAULT_LIMBS; i++ ) { // Hur hänger detta ihop?
+		bi->value[i] = 0;
+	}
+
 }
 
 /**
  * Deallocates the memory allocated in the initialized input.
  */
 void bi_clear(bi_t bi) {
-	free (bi.value); //@LAB3
+	free (bi->value); //@LAB3
 }
 
 /**
@@ -76,15 +79,28 @@ void bi_setui(bi_t res, unsigned int u) {
  * keep in mind that it outputs a number in a small interval.
  */
 void bi_rand(bi_t res, int bits) {
-// 1 Word = 3bytes = 24 bit
-// ... ... ... ...
-//räkna ut hur många bytes vi behöver
-	int antal_bitar = bits;
-	int antal_bytes = bits;//
-//räkna ut hur många words vi behöver
-//Fyll varje Limb med ett word tills vi använt upp alla bits
-//Sista, och mest signifikanta värdet kan vara tvunget att ha specialfall
+// 1 Word 24 bit
 
+//räkna ut hur många limbs vi behöver
+	int num_limbs  = bits/WORDSIZE + 1;
+
+//frigör utrymme, fyller också alla limbs med 0
+	bi_resize(res, num_limbs);
+
+//Fyll varje Limb med ett word tills vi använt upp alla bits
+	int limb_index = res->limbs -1;
+	int osatta_bitar = bits;
+	//Börja med de minst signifikanta orden och fyll de
+	for (int i = limb_index; i > 0 ; i--) {
+		res->value[i] = bi_randword();
+		osatta_bitar	-= WORDSIZE	; //räkna bort de bitar vi satt
+	}
+
+	//Specialfall för mest signifikanta limben
+	int sig_limb = bi_randword(); 
+	int mask = WORDMASK	;
+	mask = mask >> (WORDSIZE - osatta_bitar); 	//gör en mask för att se till att vi har rätt antal bitar i mest signifikanta ordet
+	res->value[0] = sig_limb & mask; 
 
 }
 
@@ -93,14 +109,50 @@ void bi_rand(bi_t res, int bits) {
  * unsigned integer.
  */
 int bi_bitsize(bi_t a) {
-  return 0;
+	int num_bits ;
+//Räkna limbs 
+//Specialfall för mest signifikanta limben
+	if (a->limbs > 1) {
+		num_bits = (a->limbs - 1)*WORDSIZE; //Wordsize-bits * fulla limbs
+	}
+
+		//hantera mest signifikanta limben
+	int sig_limb = a->value[0]; 
+	int mask = TOPMASK; //Räkna bitar, börja med mest signifikanta och gå bakåt
+	num_bits += WORDSIZE; //Utgå från att alla bitar i mest signifikanta ordet används 
+
+	int i = WORDSIZE; //Redundans, se till att vi inte kör loopen i evighet	
+	while (!(mask && sig_limb) || i == 0 ) {
+		num_bits-- ; //Räkna bort en bit om biten = 0
+		mask = mask >> 1; //Flytta biten i masken 
+	}
+
+  return num_bits;
 }
 
 /**
  * Returns the ith bit as an integer.
  */
+//konvention: i = 1 är den minst signifikanta biten
+//räknar bara bitar i word, ignorerar "nails"
 int bi_tstbit(bi_t a, int i) {
-  return 0;
+	int num_bits = bi_bitsize(a); // Totala antalet bitar i a
+	int bit_mask = 1; // 0001
+	
+	int limb_index = a->limbs - 1;
+	//Vilken limb finns biten i:
+	limb_index = limb_index - (i / WORDSIZE); 
+	limb_index = (i % WORDSIZE == 0) ? (limb_index--) : limb_index ; //justera så att ett ord innehåller bitar 1-24. 
+	//Skifta masken korrekt antal steg:
+	bit_mask = bit_mask << (i - WORDSIZE*((a->limbs-1)-limb_index));
+	//Hämta biten
+	int biten = a->value[limb_index] & bit_mask;
+	if (biten) {
+		return 1;
+	}	else {
+		return 0;
+	}
+
 }
 
 /**
@@ -141,6 +193,7 @@ void bi_mul(bi_t res, bi_t a, bi_t b) {
  * operation.
  */
 void bi_xor(bi_t res, bi_t a, bi_t b) {
+
 }
 
 /**
