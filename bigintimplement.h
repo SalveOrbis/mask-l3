@@ -3,7 +3,6 @@
  * The following functions must be implemented to solve the          *
  * problems in the laboration.                                       *
  *********************************************************************/
-
 /**
  * Initializes this input.
  */

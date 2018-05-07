@@ -42,7 +42,7 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 #define SIGFIGURES 10000000
-
+#define MAXVALUE_WORD 9999999
 
 /**
  * Structure representing a signed integer. It has a sign {-1, 0, 1},

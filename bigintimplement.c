@@ -14,7 +14,7 @@ void bi_init(bi_t bi) {
 	bi->sign = 0;
 	bi->value = malloc (sizeof(*(bi->value) * DEFAULT_LIMBS)); //@LAB3
 	bi->limbs = DEFAULT_LIMBS;
-	for (int i = 0;  i < DEFAULT_LIMBS; i++ ) { // Hur hänger detta ihop?
+	for (int i = 0;  i < DEFAULT_LIMBS; i++ ) { 
 		bi->value[i] = 0;
 	}
 
@@ -39,7 +39,7 @@ void bi_printf(bi_t a) {
 
 	int limb_index  = a->limbs - 1; //börja med mest signifikanta
 
-	printf("%d ", a->value[limb_index]); //skriv ut det rakt av
+	printf("%d", a->value[limb_index]); //skriv ut det rakt av
 	limb_index-- ;
 
 	while (limb_index >= 0) {
@@ -51,13 +51,13 @@ void bi_printf(bi_t a) {
 			i /= 10;
 			
 		}
-		printf("%d ", a->value[limb_index--]); //skriv ut ordet, och gå till nästa
+		printf("%d", a->value[limb_index--]); //skriv ut ordet, och gå till nästa
 	}
 
-	printf("\n");
 
 
 }
+
 
 /**
  * Sets bi equal to the integer represented by the hexadecimal string
@@ -134,6 +134,10 @@ void bi_rand(bi_t res, int bits) {
 	res->value[limb_index] = sig_limb & mask; 
 
 	bi_normalize(res); 
+
+
+	//Tecknet
+	res->sign = 1;
 
 }
 
@@ -221,13 +225,16 @@ void bi_add(bi_t res, bi_t a, bi_t b) {
 			bi_uadd (res, a, b);
 			res->sign = a->sign;
 		} else {
-			bi_resize (res, MAX(a->limbs, b->limbs)+1);
+			bi_resize (res, MAX(a->limbs, b->limbs));
 			bi_uabsdiff(res, a , b);
-			res->sign *= -1;
+			if (a->sign < 1) {
+				res->sign *= -1;
+			}
+
+		
 		}
 
-		bi_normalize(res);
-	}
+	}	
 
 }
 
@@ -235,12 +242,29 @@ void bi_add(bi_t res, bi_t a, bi_t b) {
  * Sets res = a - b.
  */
 void bi_sub(bi_t res, bi_t a, bi_t b) {
+
+	if (a->sign == b->sign ) {
+		if (bi_ucmp(a, b) == 1) {
+			bi_usub(res, a,b);
+		} 
+		else if (bi_ucmp(a,b) == 0)
+			res->value = 0;
+		else if (bi_ucmp(a,b) == -1)
+		{
+			bi_usub(res, b,a);
+		}
+	}
 }
 
 /**
  * Sets res = a * b.
  */
 void bi_mul(bi_t res, bi_t a, bi_t b) {
+
+	if (a->limbs == b->limbs) {
+
+	}
+
 }
 
 /**

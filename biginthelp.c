@@ -1,5 +1,5 @@
 #include "bigint.h"
-
+#include <stdio.h>
 /*********************************************************************
  * The following can be implemented as subroutines to help implement *
  * the above. This gives a naive implementation.                     *
@@ -19,20 +19,31 @@ void bi_normalize(bi_t bi) {
   while (i > 0 && bi->value[i] == 0) {
     i--;
   }
-  length = i + 1 ; //vi har hittat där vi har en nollskild lim
+  length = i + 1 ; //vi har hittat där vi har en nollskild limb
 
 
   if (length < bi->limbs) {
     //Kopiera till ny med rätt storlek
     int *copy = malloc(length * LIMBBYTES); // Gör plats för kopian 
-    copy = bi->value; //kopiera
+    // copy = bi->value; //kopiera
+
+    //kopiera
+    int i = 0;
+    while (i < length) {
+      copy[i] = bi->value[i++];
+    }
 
     bi_resize (bi, length ); 
-    bi->value = copy; 
+    // bi->value = copy; 
+    // bi_set( bi, copy);
+    i = 0;
+    while (i < length) {
+      bi->value[i] = copy[i++];
+    }
+
 
     free (copy); //frigör minnet från kopian.
 
-    //släng bort gamla
   }
 
 
@@ -243,7 +254,28 @@ int bi_blocks(bi_t a) {
  * greater than b->value as unsigned integers.
  */
 int bi_ucmp(bi_t a, bi_t b) {
-  return 0;
+  if (a->limbs > b->limbs) {
+      return 1;
+  } else if (a->limbs < b->limbs) {
+      return -1;
+  } else if (a->limbs == b->limbs) {
+      int i = a->limbs - 1;
+      while ( i >= 0) {
+        if (a->value[i] > b->value[i]) {
+          return 1;
+        } else if (a->value[i] < b->value[i]) {
+          return -1;
+        }
+        i--;
+      }
+      if (i < 0) {
+        return 0; // a = b
+      }
+
+  }
+  
+
+  printf("SOMETHING WENT WRONG\n");
 }
 
 /**
@@ -256,61 +288,61 @@ int bi_ucmp(bi_t a, bi_t b) {
 
 //Om vi har en siffra i nails, vi har fått carry-over. Returnera 1, annars returnera 0
 int get_carry (int limb) {
-  if ((limb / SIGFIGURES*10) != 0) {
-    return 1
+  if (limb > MAXVALUE_WORD) {
+    return 1;
   } else {
     return 0;
   }
 }
 
+
 void bi_uadd(bi_t res, bi_t a, bi_t b) {
-  final_limb_index = res->limbs-1 ; //Hämta index för de mest signifikanta limben i resultatet, används bara om vi får en carry-over
+  int last_index = res->limbs -1;
 
-  int limb_index = 0;
-  int add_limit = MIN(a->limbs, b->limbs); //Vi kommer bara räkna med minst antal words 
+  int i = 0;
   int carry = 0;
-
-  while (limb_index < add_limit) {
-    res->value[limb_index] = a->value[limb_index] + b->value[limb_index] + carry;
-    //kolla om vi får carry-over
-    carry = get_carry(res->value[limb_index]);
-    // if ((res->value[limb_index] / (SIGFIGURES*10) ) != 0) {
-    //   carry = 1;
-    // }
-    res->value = res->value & WORDMASK; //Ta bort carry-over från limben
-    limb_index++;
-  }
-
-  if (a->limbs == MAX(a->limbs, b->limbs)) { // a hade mer limbs än bt
-    while ( limb_index < a->limbs) {
-      res->value[limb_index] = a->value[limb_index] + carry;
-      if ((res->value[limb_index] / (SIGFIGURES*10) ) != 0) {
-         carry = 1;
-      } else {
-        carry = 0;
-      }
-
-      limb_index++;
-    } else if (b->limbs == MAX(a->limbs, b->limbs)){ //b hade mer limbs än a 
-        while ( limb_index < b->limbs ) {
-        res->value[limb_index] = b->value[limb_index] + carry;
-        if ((res->value[limb_index] / (SIGFIGURES*10) ) != 0) {
-        carry = 1;
-      } else {
-        carry = 0;
-      }
-        limb_index++;
-    } 
-
-    //vi har en slutlig carry-over. 
-    if (carry == 1) {
-      res->value[final_limb_index] = carry; //Stoppa in en 1:a i sista platsen
-      carry = 0;
+  if (a->limbs == b->limbs)  {
+    while (i < res->limbs) {
+      res->value[i] = a->value[i] + b->value[i++] + carry;
+      carry = get_carry(res->value[i]);
     }
-
   }
+
+// a och b har olika många limbs
+  else {
+    int limit = MIN (a->limbs, b->limbs);
+    while (i < limit) {
+      res->value[i] = a->value[i] + b->value[i++] + carry;
+      carry = get_carry(res->value[i]);
+    }
+    if (a->limbs == MAX(a->limbs, b->limbs)) {
+      while (i < a->limbs){
+        res->value[i] = a->value[i++] + carry;
+        carry = get_carry(res->value[i]);
+      }
+    } else if (b->limbs == MAX(a->limbs, b->limbs)) {
+      while (i < b->limbs){
+        res->value[i] = b->value[i++] + carry;
+        carry = get_carry(res->value[i]);
+      }
+    }
+  }
+
+
+
+  //Hantera sista limben i res, har vi en carry-over kvar, skriv in den, annars sätt = 0 och normalisera  
+  if (carry) {
+    res->value[last_index] = 1;
+  } else {
+    res->value[last_index] = 0;
+  }
+  // bi_normalize(res);
 
 }
+
+
+
+
 
 /**
  * Sets res->value = - a->value in two's complement for integers with
@@ -324,6 +356,17 @@ void bi_pneg(bi_t res, bi_t a) {
  * a->value > b->value.
  */
 void bi_usub(bi_t res, bi_t a, bi_t b) {
+  
+  for (int i = 0; i < a->limbs; i++) {
+    res->value[i] = a->value[i] - b->value[i];
+  }
+
+
+}
+
+int get_borrow(int res) {
+  if (res < 0) { return 1;  }
+  else { return 0;  }
 }
 
 /**
@@ -332,7 +375,63 @@ void bi_usub(bi_t res, bi_t a, bi_t b) {
  * than b->value.
  */
 void bi_uabsdiff(bi_t res, bi_t a, bi_t b) {
-}
+  int i = 0;
+  int sign = bi_ucmp(a,b);
+
+  printf("Sign : %d \n", sign);
+
+  int borrow = 0;
+  int borrow_value = SIGFIGURES;
+
+  if (a->limbs == b->limbs) {
+      while (i < a->limbs ) {
+        if (a->value[i] == MIN(a->value[i], b->value[i])) {
+           a->value[i] += borrow_value;
+        }
+        res->value[i] =  a->value[i] - b->value[i] - borrow; 
+        borrow = get_borrow(res->value[i]);
+        i++;    
+      }
+    }
+  else if (a->limbs == MAX(a->limbs, b->limbs)) {
+    int limit = b->limbs;
+    while (i < limit) {
+       res->value[i] =  a->value[i] - b->value[i] - borrow; 
+       borrow = get_borrow(res->value[i]);
+       i++;
+    }
+
+    while (i < a->limbs) {
+      res->value[i] = a->value[i++] - borrow;
+      borrow = 0;
+    }
+
+
+  } else if (b->limbs == MAX(a->limbs, b->limbs)) {
+
+    int limit = a->limbs;
+    while (i < limit) {
+       res->value[i] =  a->value[i] - b->value[i] - borrow;
+       borrow = get_borrow(res->value[i]); 
+       i++;
+    }
+
+    while (i < b->limbs) {
+      res->value[i] = b->value[i++] -borrow;
+      borrow = 0;
+
+    }
+  }
+
+    for (i = 0 ; i < res->limbs ; i++) {
+      res->value[i] = abs(res->value[i]);
+    }
+    bi_normalize(res);
+    if (res->limbs == 1 && res->value[0] == 0) { //Kolla om resultatet blev = 0
+      sign = 0;
+    }
+    res->sign = sign;
+ } 
 
 /**
  * Sets res->value = a->value + b->value * scalar * 2^(shift * WORDSIZE)

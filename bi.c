@@ -31,7 +31,7 @@
 #include "correct.h"
 
 
-void eget_test(int bits); //LAB3 I TESTSYFTE
+void eget_test(int a_bits, int b_bits); //LAB3 I TESTSYFTE
 
 int verbose = 0;
 
@@ -310,11 +310,20 @@ void bi_test_v3(char *name,
   bi_init(a);
   bi_init(b);
 
+  int antaltest = 0;
   test_head(name);
   for (i = 1; i < 100; i++) {
     for (j = 1; j < 100; j++) {
       bi_rand(a, i);
       bi_rand(b, j);
+
+      //EGEN KOD
+
+      // antaltest++;
+      // fprintf(stderr,"\nAntal test: %d\n", antaltest);
+      // fprintf(stderr,"Antal bits a: %d Antal bits b: %d", i, j);
+      // printf("\n");
+      // //
 
       bi_para_v3(a, b, bf, zf);
     }
@@ -487,16 +496,35 @@ void runtests() {
 
 
 
-void eget_test(int bits) {
+void eget_test(int a_bits, int b_bits) {
   //EGEN KOD I TESTSYFTE
     bi_t a ;
-    int bitar = bits;
+    bi_t b ;
+    bi_t res ;
+    int a_bitar = a_bits;
+    int b_bitar = b_bits;
     bi_init(a);
-    bi_rand (a, bitar);
-    int limbs = bitar / WORDSIZE;
-
+    bi_init(b);
+    bi_init(res);
+    bi_rand (a, a_bitar);
+    bi_rand (b, b_bitar);
+    
+    a->sign = 1;
+    b->sign = -1;
 
     bi_printf(a);
+    printf("\n+\n");
+    bi_printf(b);
+    printf("\n=\n");
+    bi_add(res, a, b );
+
+    bi_printf(res);
+    printf("\n");
+    bi_clear(a);
+    bi_clear(b);
+    bi_clear(res);
+
+
     // fprintf(stderr, "Ny big int\n");
     // fprintf(stderr, "limbs: %d \n", a->limbs);
     // fprintf(stderr, "random: %d \n", bi_randword());
@@ -514,9 +542,9 @@ void eget_test(int bits) {
 void main(int argc, char **argv) {
 
 
-  eget_test(122);
-  eget_test(50);
-  eget_test(72);
+  eget_test(25, 23);
+  // eget_test(50);
+  // eget_test(72);
 
   time_t t;
 

@@ -116,3 +116,7 @@ void bi_uabsdiff(bi_t res, bi_t a, bi_t b);
  * mod 2^((a->limbs + shift) * WORDSIZE).
  */
 void bi_umuladd(bi_t res, bi_t a, int scalar, int shift);
+
+
+int get_carry (int limb); //egen funktion för att hämta en carry vid addition
+int get_borrow(int res) ; //egen funktion för att låna från mer signifikanta siffror vid subtraktion
