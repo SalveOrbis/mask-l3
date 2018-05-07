@@ -1,6 +1,5 @@
 #include "bigint.h"
 
-
 /*********************************************************************
  * The following can be implemented as subroutines to help implement *
  * the above. This gives a naive implementation.                     *
@@ -12,6 +11,31 @@
  * bi->limbs = 1 to be able to store zero.
  */
 void bi_normalize(bi_t bi) {
+
+  int length;
+  int i;
+
+  i = bi->limbs -1; //Börja med den mest sign. delen
+  while (i > 0 && bi->value[i] == 0) {
+    i--;
+  }
+  length = i + 1 ; //vi har hittat där vi har en nollskild lim
+
+
+  if (length < bi->limbs) {
+    //Kopiera till ny med rätt storlek
+    int *copy = malloc(length * LIMBBYTES); // Gör plats för kopian 
+    copy = bi->value; //kopiera
+
+    bi_resize (bi, length ); 
+    bi->value = copy; 
+
+    free (copy); //frigör minnet från kopian.
+
+    //släng bort gamla
+  }
+
+
 }
 
 /**
@@ -30,16 +54,8 @@ void bi_setzero(bi_t res, int i) {
  * Generates a pseudo-random word.
  */
 int bi_randword() {
-  int offset = 10000;
-  // word 24 bits = 3 bytes
-  // 00000000 (randomnumber)
-  int rand_word = 0;
-  int part1 = rand() / 10 ;
-  int part2 = rand();
-  rand_word = part1 * offset + part2;
+  unsigned int rand_word = arc4random();
   rand_word = rand_word & WORDMASK ; //Säkerhetsåtgärd för att se till att alla bitar i en "nail" är = 0 
-  //returnerar ett word där den mest signifikanta siffran som mest har
-  //sju stycken siffror i följd = ett 3 tal i 3 bytes..
   return rand_word;
 }
 
@@ -49,7 +65,9 @@ int bi_randword() {
  */
 void bi_resize(bi_t bi, int limbs) {
   
-  bi->value = realloc(bi, (limbs*LIMBBYTES)); //omallokerar minnet för ny storlek;
+  free(bi->value); //frigör gamla utrymmet
+
+  bi->value = malloc( (limbs*LIMBBYTES)); //omallokerar minnet för ny storlek;
   bi->sign = 0;
   bi->limbs = limbs;
 
@@ -235,7 +253,63 @@ int bi_ucmp(bi_t a, bi_t b) {
  * ASSUMES: res->limbs >= max(a->limbs, b->limbs). If equality holds,
  * then the overflow is discarded.
  */
+
+//Om vi har en siffra i nails, vi har fått carry-over. Returnera 1, annars returnera 0
+int get_carry (int limb) {
+  if ((limb / SIGFIGURES*10) != 0) {
+    return 1
+  } else {
+    return 0;
+  }
+}
+
 void bi_uadd(bi_t res, bi_t a, bi_t b) {
+  final_limb_index = res->limbs-1 ; //Hämta index för de mest signifikanta limben i resultatet, används bara om vi får en carry-over
+
+  int limb_index = 0;
+  int add_limit = MIN(a->limbs, b->limbs); //Vi kommer bara räkna med minst antal words 
+  int carry = 0;
+
+  while (limb_index < add_limit) {
+    res->value[limb_index] = a->value[limb_index] + b->value[limb_index] + carry;
+    //kolla om vi får carry-over
+    carry = get_carry(res->value[limb_index]);
+    // if ((res->value[limb_index] / (SIGFIGURES*10) ) != 0) {
+    //   carry = 1;
+    // }
+    res->value = res->value & WORDMASK; //Ta bort carry-over från limben
+    limb_index++;
+  }
+
+  if (a->limbs == MAX(a->limbs, b->limbs)) { // a hade mer limbs än bt
+    while ( limb_index < a->limbs) {
+      res->value[limb_index] = a->value[limb_index] + carry;
+      if ((res->value[limb_index] / (SIGFIGURES*10) ) != 0) {
+         carry = 1;
+      } else {
+        carry = 0;
+      }
+
+      limb_index++;
+    } else if (b->limbs == MAX(a->limbs, b->limbs)){ //b hade mer limbs än a 
+        while ( limb_index < b->limbs ) {
+        res->value[limb_index] = b->value[limb_index] + carry;
+        if ((res->value[limb_index] / (SIGFIGURES*10) ) != 0) {
+        carry = 1;
+      } else {
+        carry = 0;
+      }
+        limb_index++;
+    } 
+
+    //vi har en slutlig carry-over. 
+    if (carry == 1) {
+      res->value[final_limb_index] = carry; //Stoppa in en 1:a i sista platsen
+      carry = 0;
+    }
+
+  }
+
 }
 
 /**

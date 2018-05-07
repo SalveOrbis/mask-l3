@@ -31,7 +31,7 @@
 #include "correct.h"
 
 
-void eget_test(void); //LAB3 I TESTSYFTE
+void eget_test(int bits); //LAB3 I TESTSYFTE
 
 int verbose = 0;
 
@@ -487,26 +487,36 @@ void runtests() {
 
 
 
-void eget_test() {
+void eget_test(int bits) {
   //EGEN KOD I TESTSYFTE
-    printf("%d", WORDSIZE);
-    int x = 10;
-
     bi_t a ;
-    int bitar = 123;
+    int bitar = bits;
     bi_init(a);
     bi_rand (a, bitar);
     int limbs = bitar / WORDSIZE;
 
-    for (int i = 0; i < limbs; i++) {
-      printf("Word nr: %d, = %d \n ", i, a->value[i]);
-     }
 
+    bi_printf(a);
+    // fprintf(stderr, "Ny big int\n");
+    // fprintf(stderr, "limbs: %d \n", a->limbs);
+    // fprintf(stderr, "random: %d \n", bi_randword());
+    // fprintf(stderr, "random: %d \n", bi_randword());
+
+    
+    // int i = a->limbs - 1 ; 
+    // while ( i >= 0) {
+    //   fprintf(stderr, "%d  ",  a->value[i--]);
+    //  }
+
+    // fprintf(stderr, "\n");
 }
 
 void main(int argc, char **argv) {
 
-  eget_test();
+
+  eget_test(122);
+  eget_test(50);
+  eget_test(72);
 
   time_t t;
 

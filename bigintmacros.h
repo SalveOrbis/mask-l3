@@ -41,6 +41,9 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
+#define SIGFIGURES 10000000
+
+
 /**
  * Structure representing a signed integer. It has a sign {-1, 0, 1},
  * a value (array of limbs containing words), and the number of
