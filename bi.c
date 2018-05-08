@@ -32,6 +32,7 @@
 
 
 void eget_test(int a_bits, int b_bits); //LAB3 I TESTSYFTE
+void eget_test2(void);
 
 int verbose = 0;
 
@@ -428,8 +429,8 @@ void bi_test_impexp() {
       // Make room for potential minus character.
       s = malloc(sizeof(*s) * ((i + BLOCKSIZE - 1) / BLOCKSIZE + 2));
 
-      bi_export(s, a);
-      bi_import(b, s);
+      int num_characters = bi_export(s, a);
+      bi_import(b, s, num_characters);
 
       if (bi_cmp(a, b) != 0) {
         error_head("Failed to compute!\n");
@@ -525,26 +526,79 @@ void eget_test(int a_bits, int b_bits) {
     bi_clear(res);
 
 
-    // fprintf(stderr, "Ny big int\n");
-    // fprintf(stderr, "limbs: %d \n", a->limbs);
-    // fprintf(stderr, "random: %d \n", bi_randword());
-    // fprintf(stderr, "random: %d \n", bi_randword());
-
-    
-    // int i = a->limbs - 1 ; 
-    // while ( i >= 0) {
-    //   fprintf(stderr, "%d  ",  a->value[i--]);
-    //  }
-
-    // fprintf(stderr, "\n");
 }
+
+void eget_test2 (void) {
+  bi_t a;
+  bi_t b;
+  bi_init(a);
+  bi_init(b);
+  bi_resize(a, 1);
+  a->value[0] = 0;
+  // a->value[1] = 11;
+  a->sign = 1;
+ 
+
+  // bi_rand(a, 1);
+  bi_printf(a);  
+  printf("\n");
+
+
+  char * hexform = malloc(sizeof(*hexform) * ((42 + BLOCKSIZE - 1) / BLOCKSIZE + 2));
+
+  int antal_chars = bi_export(hexform, a);
+  printf("%s\n", hexform);
+
+  bi_import(b, hexform, antal_chars );
+  bi_printf(b);
+  printf("\n");
+
+//   char *hexform; 
+
+//   int j = 0;
+//   while (j < 1) {
+//     bi_rand(a, 24);
+//     printf("Värdet: ");
+//     bi_printf(a);
+//     printf("\n");
+//     for (int i = a->limbs -1 ; i >= 0; i--) {
+//       printf("limb: %d limbvärdet: %d\n",i, a->value[i]);
+//       if (a->value[i] > 131071) { printf("För stor\n");}
+//     }
+//     printf("\n");
+//     j++;
+// }
+
+  // int num_block = bi_blocks(a);
+  // printf("Antal block: %d \n", num_block);
+  // for (int i = num_block;  i > 0; i--) {
+
+  //  int block = bi_getblk(a, i);
+  //  char h = int_to_hex(block);
+  //   printf("Blocket:  %d ", block )  ;
+  //   printf(" HEX:  %c  i: %d\n",h, i);
+  // }
+  // printf("\n");
+
+  // for (int i = 1; i < 10; i++){
+  //   hexform = malloc(sizeof(*hexform) * ((i + BLOCKSIZE - 1) / BLOCKSIZE + 2));
+  //   bi_rand(a, i)   ;
+  //   bi_printf(a);
+  //   int stringlen = bi_export (hexform, a);
+  //  printf("\n%s\n",hexform );
+  //   // for (int i = stringlen -1; i >= 0; i-- ) {
+  //   //   printf("%c", hexform[i]);
+  //   // }
+  //   printf("\n");
+  // }
+}
+
 
 void main(int argc, char **argv) {
 
 
-  eget_test(25, 23);
-  // eget_test(50);
-  // eget_test(72);
+  // eget_test(20, 23);
+   eget_test2();
 
   time_t t;
 

@@ -22,7 +22,7 @@ void bi_printf(bi_t a);
  * Sets bi equal to the integer represented by the hexadecimal string
  * given as input.
  */
-void bi_import(bi_t res, char *s);
+void bi_import(bi_t res, char *s, int num_characters);
 
 /**
  * Writes a signed hexadecimal representation of the value of a to

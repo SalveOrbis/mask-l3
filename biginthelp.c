@@ -206,37 +206,56 @@ char int_to_hex(int h) {
 
 /**
  * Returns the ith block of a->value.
-  block [0] är det mest signifikanta blocket.
+
+// block 1 är det minst signifikanta blocket
  */
 int bi_getblk(bi_t a, int i) {
-  // //Räkna ut vilken limb blocket finns i:
+  int blocks = bi_blocks(a);
+  int block;
 
-  // int limb;
-  // limb = i / BLOCKS ;//a->limbs[0] mest signifikanta limben
 
-  // if (limb >= a->limbs ) {
-  //   printf("Block index exceeds the number of blocks in a");
-  //   return 0;
-  // }
+  //vilken limb finns blocket i?
+  int index_limb = i / BLOCKS; 
+  if (i % BLOCKS == 0) {
+    index_limb-- ;
+  }
+   // printf(" Index limb: %d ", index_limb);
 
-  // //Hämta blocket
-  // //Ställ in masken på rätt position:
-  // int block_mask ;
-  // if limb == 0 {
-  //     block_mask = (BLOCKMASK << (i*BLOCKSIZE)); //shift block i steps
-  //  } 
-  // else {
-  //     i - limb*BLOCKS 
-  //  }
-  // int block = bi->value[limb]
+  i -= BLOCKS*index_limb; 
+  i-- ;
 
-  // return 0;
+  // //hämta värdet på blocket
+  int limb = a->value[index_limb];
+   // printf("Limben: %d ", limb);
+  int mask = BLOCKMASK;
+  limb = limb >> BLOCKSIZE*(i) ;
+  block = limb & mask ;
+   return block;
+
 }
 
 /**
  * Sets the ith block of a->value.
  */
 int bi_setblk(bi_t a, int i, int blk) {
+  int value = blk;
+  // printf("%d\n", value );
+  //hitta limben
+  int limb_index = i / BLOCKS ;
+
+  if(i % BLOCKS == 0) {
+    limb_index--;
+  }
+
+  i--;
+  // int mask = BLOCKMASK << (i - BLOCKS*(limb_index)) ;
+  int mask = BLOCKMASK;
+  value = value <<  (i*BLOCKSIZE - BLOCKS*(limb_index)*BLOCKSIZE);
+
+
+  a->value[limb_index] += value  ;
+  // printf(" a value: %d limb_index: %d \n", a->value[limb_index], limb_index);
+
   return 0;
 }
 

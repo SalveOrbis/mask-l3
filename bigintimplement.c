@@ -32,30 +32,53 @@ void bi_clear(bi_t bi) {
  */
 void bi_printf(bi_t a) {
 
+	int bitar = a->limbs*WORDSIZE;
+	char *s;
+	s = malloc(sizeof(*s) * ((bitar + BLOCKSIZE - 1) / BLOCKSIZE + 2));
 
 	if (a->sign < 0) {
 		printf("-");
 	}
+	if (a->value[0] == 0 && a->limbs == 1) {
+		printf("0");
+	}
+	else {
+		int limb_index  = a->limbs - 1; //börja med mest signifikanta
+		int num_blocks = bi_blocks(a);
 
-	int limb_index  = a->limbs - 1; //börja med mest signifikanta
+		int n = 0;
+		int j = num_blocks;
+		int i = 1;
+		while (n < limb_index) {
+			for ( i = 1; i <= num_blocks - BLOCKS  ; i++) {
+				int blocket = bi_getblk(a, i);
+				// printf(" blocket %d ", blocket);
+				char hexdecimal = int_to_hex(blocket);
+				s[j--] = hexdecimal;
+			}
+			n++;
+		}
 
-	printf("%d", a->value[limb_index]); //skriv ut det rakt av
-	limb_index-- ;
+		int last_index  = num_blocks;
+		while( bi_getblk(a, last_index) == 0) {
+			last_index--;
+		}
 
-	while (limb_index >= 0) {
-		int i = SIGFIGURES; //GÖR DYNAMISKT
-		int bit;
-		//kolla om vi har ledande nollor i wordet, om ja, skriv ut dem:
-		while ((bit = a->value[limb_index]/i ) == 0 && i > 0) { //KOMMER INTE FUNGERA
-			printf("0");
-			i /= 10;
+		for (i  ; i <= last_index; i++ ) {
+			int blocket = bi_getblk(a, i);
+			// printf(" blocket %d ", blocket);
+			char hexdecimal = int_to_hex(blocket);
+			s[j--] = hexdecimal;
+		}
+
+
+
+		for (int i = j+1; i <= num_blocks; i++ ) {
+		printf("%c", s[i]);
 			
 		}
-		printf("%d", a->value[limb_index--]); //skriv ut ordet, och gå till nästa
+
 	}
-
-
-
 }
 
 
@@ -63,7 +86,48 @@ void bi_printf(bi_t a) {
  * Sets bi equal to the integer represented by the hexadecimal string
  * given as input.
  */
-void bi_import(bi_t res, char *s) {
+void bi_import(bi_t res, char *s, int num_characters) {
+	int antal_chars = num_characters; //bytes * 8 bitar/bytes  /
+	int last_index = antal_chars-1;
+	int antal_limbs = antal_chars / BLOCKS;
+	antal_limbs += 1;
+	if (antal_chars % BLOCKS == 0) {
+		antal_limbs-- ;
+	}
+
+	if (antal_chars == 0) {
+		antal_limbs = 1;
+	}
+
+	bi_resize(res, antal_limbs );
+	// printf("%c\n antal_chars: %d ", s[0], antal_chars);
+	char noll = '0';
+	if (s[0] == noll && antal_chars == 0) {
+		 // printf("antal limbs: %d \n", res->limbs);
+		res->sign = 0;
+		res->value[0] = 0;
+
+	} 
+	else {
+
+		if (s[0] == '-') {
+			res->sign = -1;
+			// last_index--;
+		} else {
+			res->sign = 1;
+		}
+
+		int j = 1;
+		for (int i = last_index ; i >= 0; i--){
+		 // printf("SUPRISE MUFACKA");
+			int decimal_tal = hex_to_int(s[i]);
+			// printf("Decimal talet: %d\n", decimal_tal);
+			bi_setblk(res, j++, decimal_tal);
+		}
+	}
+	// printf("limb1: %d limb2: %d \n", res->value[1], res->value[0]);
+	bi_normalize(res);
+
 }
 
 /**
@@ -72,7 +136,68 @@ void bi_import(bi_t res, char *s) {
  * characters written is returned.
  */
 int bi_export(char *res, bi_t a) {
-  return 0;
+	int bitar = a->limbs*WORDSIZE;
+	int is = 0;
+	char *s = malloc(sizeof(*s) * ((bitar + BLOCKSIZE - 1) / BLOCKSIZE + 2));
+	int num_blocks = bi_blocks(a);
+
+	if (a->sign < 0) {
+		char minus = '-';
+		res[is++] = minus;
+
+	}
+	if (a->value[0] == 0 && a->limbs == 1) {
+		char noll = '0';
+		res[is] = noll;
+	}
+	else {
+		int limb_index  = a->limbs - 1; //börja med mest signifikanta
+
+		int n = 0;
+		int j = num_blocks;
+		int i = 1;
+		while (n < limb_index) {
+			for ( i = 1; i <= num_blocks - BLOCKS  ; i++) {
+				int blocket = bi_getblk(a, i);
+				// printf(" blocket %d ", blocket);
+				char hexdecimal = int_to_hex(blocket);
+				s[j--] = hexdecimal;
+			}
+			n++;
+		}
+
+		int last_index  = num_blocks;
+		while( bi_getblk(a, last_index) == 0) {
+			last_index--;
+		}
+
+		for (i  ; i <= last_index; i++ ) {
+			int blocket = bi_getblk(a, i);
+			// printf(" blocket %d ", blocket);
+			char hexdecimal = int_to_hex(blocket);
+			s[j--] = hexdecimal;
+		}
+
+
+
+		for (int i = j+1; i <= num_blocks; i++ ) {
+			res[is++] = s[i];		
+		}
+
+	}
+
+
+
+
+	// //ett block en hexadecimal siffra
+	// int num_blocks = bi_blocks(a);
+
+	// for (int i = num_blocks; i >= 0; i-- ) {
+	// 	int block = bi_getblk (a, i);
+	// 	char hex = int_to_hex(block);
+	// 	res[i] = hex;
+	// }
+  return is;
 }
 
 /**
@@ -128,16 +253,24 @@ void bi_rand(bi_t res, int bits) {
 	}
 
 	//Specialfall för mest signifikanta limben
-	int sig_limb = bi_randword(); 
+	int sig_limb = (int)bi_randword(); 
 	int mask = WORDMASK	;
 	mask = mask >> (WORDSIZE - osatta_bitar); 	//gör en mask för att se till att vi har rätt antal bitar i mest signifikanta ordet
-	res->value[limb_index] = sig_limb & mask; 
-
+	int maskad = sig_limb & mask;
+	// printf("sig_limb: %d  masken: %d maskad: %d ",sig_limb,  mask, maskad);
+	res->value[limb_index] = mask & sig_limb  ; 
 	bi_normalize(res); 
 
 
 	//Tecknet
-	res->sign = 1;
+	if (res->limbs == 0 && res->value[0] == 0) {
+		res->sign = 0;
+	}
+	else {
+		res->sign = 1;
+	}
+
+
 
 }
 
@@ -200,13 +333,47 @@ int bi_tstbit(bi_t a, int i) {
  * than b as signed integers.
  */
 int bi_cmp(bi_t a, bi_t b) {
-  return 0;
+	if (a->sign > b->sign){ //a positiv, b antingen = 0 eller negativ
+		return 1;
+	} 
+	else if (a->sign < b->sign) {
+		return -1;
+	}
+	else { // a->sign == b->sign
+		if (bi_ucmp(a,b) == 0) { //a == b 
+			return 0;
+		}
+		else if (a->sign == -1) {
+			if (bi_ucmp(a,b) == 1) { // a > b (unsigned) , men tecken negativt 
+				return -1; 
+			}
+			else if (bi_ucmp (a,b) == -1) { // a < b, negativt tecken
+				return 1;
+			}
+		}
+		else if (a->sign == 0) { //a = b = 0
+			return 0;
+			}
+		else if (a->sign == 1){
+			if (bi_ucmp(a,b) == 1) { //a > b 
+				return 1;
+			} 
+			else if (bi_ucmp(a,b) == -1) {
+				return -1;
+			}
+		}
+	}
 }
+
 
 /**
  * Sets res = -a.
  */
 void bi_neg(bi_t res, bi_t a) {
+	res->value = a->value;
+	res->limbs = a->limbs;
+	res->sign = a->sign * -1;
+	
 }
 
 /**
